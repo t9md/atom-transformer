@@ -66,13 +66,13 @@ class CoffeeScript extends Transformer
             editor: outEditor
 
       when 'compile'
+        console.log "Coffee compile"
         @output '/tmp/transform.js', (outEditor) =>
-          @runComman
+          @runCommand
             command: 'coffee'
             args: ["-cbp","--no-header", filePath]
             options: options
             editor: outEditor
-
 
 class LESS extends Transformer
   transform: (action) ->

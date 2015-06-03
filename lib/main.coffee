@@ -15,8 +15,8 @@ module.exports =
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
       'transform:here':           => @transform('here')
-      'transform:coffee-run':     => @transform('there', 'run')
-      'transform:coffee-compile': => @transform('there', 'compile')
+      'transform:run':     => @transform('there', 'run')
+      'transform:compile': => @transform('there', 'compile')
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
