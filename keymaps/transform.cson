@@ -8,5 +8,5 @@
 # For more detailed documentation see
 # https://atom.io/docs/latest/behind-atom-keymaps-in-depth
 'atom-workspace':
-  'cmd-m':       'transform:here'
-  'shift-cmd-m': 'transform:there'
+  'cmd-m':       'transform:coffee-run'
+  'shift-cmd-m': 'transform:coffee-compile'

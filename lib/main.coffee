@@ -13,8 +13,9 @@ module.exports =
   activate: (state) ->
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
-      'transform:here':  => @transform('here')
-      'transform:there': => @transform('there')
+      'transform:here':           => @transform('here')
+      'transform:coffee-run':     => @transform('there', 'run')
+      'transform:coffee-compile': => @transform('there', 'compile')
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
@@ -32,13 +33,18 @@ module.exports =
     fs.writeFileSync filePath, text
     cb filePath
 
-  transform: (where) ->
+  transform: (where, action) ->
     return unless editor = @getEditor()
     text = editor.getSelectedText() or editor.getText()
 
     grammar = editor.getGrammar()
     if grammar.name is 'CoffeeScript'
-      @transformCoffee text
+      switch action
+        when 'compile'
+          @transformCoffee text
+        when 'run'
+          console.log 'run'
+          @runCoffee text
       return
     else
       text = @surroundWord text, '"'
@@ -54,7 +60,28 @@ module.exports =
         @there text
         selection.clear()
 
-    # console.log text
+  runCoffee: (text) ->
+    editor = @getEditor()
+    editor.save()
+
+    runFile = (command, args, cb, finish, options) ->
+      stdout  = (output) -> cb output
+      stderr  = (output) -> cb output
+      exit    = (code)   -> finish(code)
+      process = new BufferedProcess {command, args, options, stdout, stderr, exit}
+
+    outfilePath = "/tmp/transform"
+    options =
+      searchAllPanes: true
+      activatePane: false
+      split: 'right'
+
+    atom.workspace.open(outfilePath, options).done (outEditor) ->
+      outEditor.setText '' # clear
+      onData   = (data) -> outEditor.insertText data
+      onFinish = (code) -> outEditor.save()
+      runFile 'coffee', [editor.getURI()], onData, onFinish, cwd: path.dirname(editor.getURI())
+
 
   transformCoffee: (text) ->
     filePath = "/tmp/transform.js"
@@ -64,7 +91,6 @@ module.exports =
       split: 'right'
 
     pane = atom.workspace.getActivePane()
-    console.log pane.getActiveItem().getURI()
 
     atom.workspace.open(filePath, options).done (editor) =>
       editor.setText '' # clear
