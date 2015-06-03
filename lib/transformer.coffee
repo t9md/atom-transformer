@@ -12,7 +12,7 @@ class Transformer
 
   constructor: (@editor) ->
     selection = @editor.getLastSelection()
-    @source = selection.isEmpty() and 'buffer' or 'selection'
+    @source   = selection.isEmpty() and 'buffer' or 'selection'
     @save() if @needSave
     @initialize()
 
@@ -40,7 +40,7 @@ class Transformer
   runCommand: ({command, args, options, editor}) ->
     onData   = (data) -> editor.insertText data
     onFinish = (code) ->
-      temp.cleanupSync() if @source is 'selection'
+      temp.cleanupSync() if (@source is 'selection') and @needSave()
       editor.save()
 
     stdout  = (output) -> onData output
