@@ -1,5 +1,6 @@
-{CompositeDisposable, BufferedProcess} = require 'atom'
+{CompositeDisposable} = require 'atom'
 _    = require 'underscore-plus'
+transformers = require './transformer'
 fs   = require 'fs'
 path = require 'path'
 temp = null
@@ -25,26 +26,16 @@ module.exports =
       line.replace /([^ ]+)/g, str+"$1"+str
     .join("\n")
 
-  writeTempfile: (text, cb) ->
-    temp ?= require('temp').track()
-    dir      = temp.mkdirSync "transformer"
-    filePath = path.join(dir, "tempfile")
-
-    fs.writeFileSync filePath, text
-    cb filePath
-
   transform: (where, action) ->
     return unless editor = @getEditor()
     text = editor.getSelectedText() or editor.getText()
 
-    grammar = editor.getGrammar()
-    if grammar.name is 'CoffeeScript'
-      switch action
-        when 'compile'
-          @transformCoffee text
-        when 'run'
-          console.log 'run'
-          @runCoffee text
+    grammar     = editor.getGrammar()
+    Transformer = transformers[grammar.name]
+
+    if Transformer
+      transformer = new Transformer(editor)
+      transformer.transform action
       return
     else
       text = @surroundWord text, '"'
@@ -59,54 +50,6 @@ module.exports =
       when 'there'
         @there text
         selection.clear()
-
-  runCoffee: (text) ->
-    editor = @getEditor()
-    editor.save()
-
-    runFile = (command, args, cb, finish, options) ->
-      stdout  = (output) -> cb output
-      stderr  = (output) -> cb output
-      exit    = (code)   -> finish(code)
-      process = new BufferedProcess {command, args, options, stdout, stderr, exit}
-
-    outfilePath = "/tmp/transform"
-    options =
-      searchAllPanes: true
-      activatePane: false
-      split: 'right'
-
-    atom.workspace.open(outfilePath, options).done (outEditor) ->
-      outEditor.setText '' # clear
-      onData   = (data) -> outEditor.insertText data
-      onFinish = (code) -> outEditor.save()
-      runFile 'coffee', [editor.getURI()], onData, onFinish, cwd: path.dirname(editor.getURI())
-
-
-  transformCoffee: (text) ->
-    filePath = "/tmp/transform.js"
-    options =
-      searchAllPanes: true
-      activatePane: false
-      split: 'right'
-
-    pane = atom.workspace.getActivePane()
-
-    atom.workspace.open(filePath, options).done (editor) =>
-      editor.setText '' # clear
-      onData   = (data) -> editor.insertText data
-      onFinish = (code) -> temp.cleanupSync(); editor.save()
-
-      @compileCoffee text, onData, onFinish
-
-  compileCoffee: (text, cb, finish) ->
-    @writeTempfile text, (filePath) ->
-      command = 'coffee'
-      args    = ["-cbp","--no-header", filePath]
-      stdout  = (output) -> cb output
-      stderr  = (output) -> cb output
-      exit    = (code)   -> finish(code)
-      process = new BufferedProcess {command, args, stdout, stderr, exit}
 
   there: (text) ->
     editor = @getEditor()
