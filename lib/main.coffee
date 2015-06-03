@@ -28,7 +28,6 @@ module.exports =
 
   transform: (where, action) ->
     return unless editor = @getEditor()
-    text = editor.getSelectedText() or editor.getText()
 
     grammar     = editor.getGrammar()
     Transformer = transformers[grammar.name]
@@ -38,6 +37,7 @@ module.exports =
       transformer.transform action
       return
     else
+      text = editor.getSelectedText() or editor.getText()
       text = @surroundWord text, '"'
 
     selection = editor.getLastSelection()

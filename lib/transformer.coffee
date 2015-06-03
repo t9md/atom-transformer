@@ -3,18 +3,28 @@ fs   = require 'fs'
 path = require 'path'
 temp = require 'temp'
 
-
 class Transformer
+  needSave: false
+  command:  null
+  args:     null
+  options:  null
+  outFile:  '/tmp/transformer'
+
   constructor: (@editor) ->
     selection = @editor.getLastSelection()
     @source = selection.isEmpty() and 'buffer' or 'selection'
+    @save() if @needSave
+    @initialize()
 
-  input: ->
+  save: ->
     if @source is 'buffer'
-      @editor.save()
-      return
-    else
-      return @editor.getSelectedText()
+      @editor.save() if @editor.isModified()
+      @URI = @editor.getURI()
+    else if @source is 'selection'
+      @URI = @writeTempfile @editor.getSelectedText()
+    @dir = path.dirname @URI
+
+  initialize: ->
 
   output: (filePath, callback) ->
     options =
@@ -45,38 +55,49 @@ class Transformer
     fs.writeFileSync filePath, text
     return filePath
 
-class CoffeeScript extends Transformer
   transform: (action) ->
-    text = @input()
-
-    switch @source
-      when 'buffer'
-        filePath = @editor.getURI()
-      when 'selection'
-        filePath = @writeTempfile text
-    options = cwd: path.dirname(filePath)
-
     switch action
       when 'run'
-        @output '/tmp/transform', (outEditor) =>
-          @runCommand
-            command: 'coffee'
-            args: [filePath]
-            options: options
-            editor: outEditor
-
+        @run()
       when 'compile'
-        console.log "Coffee compile"
-        @output '/tmp/transform.js', (outEditor) =>
-          @runCommand
-            command: 'coffee'
-            args: ["-cbp","--no-header", filePath]
-            options: options
-            editor: outEditor
+        @compile()
+
+  run: ->
+    @output @outFile, (editor) =>
+      options =
+        command: @command,
+        args:    @args or [@URI]
+        options: @options or {cwd: @dir}
+        editor:  editor
+
+      @runCommand options
+
+class CoffeeScript extends Transformer
+  needSave: true
+  command:  'coffee'
+
+  compile: ->
+    @outFile = '/tmp/transformer.js'
+    @args = ["-cbp","--no-header", @URI]
+    @run()
+
+class Python extends Transformer
+  needSave: true
+  command:  'python'
+
+class JavaScript extends Transformer
+  needSave: true
+  command:  'node'
+
+class Go extends Transformer
+  needSave: true
+  command:  'go'
+
+  initialize: ->
+    @args = ['run', @URI]
 
 class LESS extends Transformer
   transform: (action) ->
-
     text     = @editor.getSelectedText() or @editor.getText()
     filePath = @editor.getURI()
 
@@ -94,6 +115,6 @@ class LESS extends Transformer
           outEditor.insertText output.css
         outEditor.save()
 
-module.exports =
-  CoffeeScript: CoffeeScript
-  LESS:         LESS
+module.exports = {
+  CoffeeScript, LESS, Python, Go, JavaScript
+}
