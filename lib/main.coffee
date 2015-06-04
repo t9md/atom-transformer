@@ -14,7 +14,7 @@ module.exports =
   activate: (state) ->
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
-      'transform:here':           => @transform('here')
+      'transform:here':    => @transform('here')
       'transform:run':     => @transform('there', 'run')
       'transform:compile': => @transform('there', 'compile')
 
