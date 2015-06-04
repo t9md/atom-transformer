@@ -2,13 +2,15 @@
 fs   = require 'fs'
 path = require 'path'
 temp = require 'temp'
+os = require 'os'
 
 class Transformer
-  needSave: false
-  command:  null
-  args:     null
-  options:  null
-  outFile:  '/tmp/transformer'
+  needSave:  false
+  command:   null
+  args:      null
+  options:   null
+  extension: null
+  outFile:   path.join os.tmpdir(), 'transformer'
 
   constructor: (@editor) ->
     selection = @editor.getLastSelection()
@@ -62,8 +64,14 @@ class Transformer
       when 'compile'
         @compile()
 
+  getOutFilePath: ->
+    if @extension
+      "#{@outFile}.#{@extension}"
+    else
+      @outFile
+
   run: ->
-    @output @outFile, (editor) =>
+    @output @getOutFilePath(), (editor) =>
       options =
         command: @command,
         args:    @args or [@URI]
@@ -72,12 +80,15 @@ class Transformer
 
       @runCommand options
 
+  compile: ->
+    @run()
+
 class CoffeeScript extends Transformer
   needSave: true
   command:  'coffee'
 
   compile: ->
-    @outFile = '/tmp/transformer.js'
+    @extension = 'js'
     @args = ["-cbp","--no-header", @URI]
     @run()
 
@@ -100,8 +111,9 @@ class LESS extends Transformer
   transform: (action) ->
     text     = @editor.getSelectedText() or @editor.getText()
     filePath = @editor.getURI()
+    @extension = 'css'
 
-    @output '/tmp/transform.css', (outEditor) =>
+    @output @getOutFilePath(), (outEditor) =>
       less = require 'less'
       resourcePath = atom.themes.resourcePath;
       atomVariablesPath = path.resolve resourcePath, 'static', 'variables'

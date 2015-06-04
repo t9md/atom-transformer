@@ -1,14 +1,3 @@
-# Keybindings require three things to be fully defined: A selector that is
-# matched against the focused element, the keystroke and the command to
-# execute.
-#
-# Below is a basic keybinding which registers on all platforms by applying to
-# the root workspace element.
-
-# For more detailed documentation see
-# https://atom.io/docs/latest/behind-atom-keymaps-in-depth
-# '.platform-darwin atom-text-editor:not([mini])':
-# '.platform-darwin atom-text-editor':
-'atom-text-editor':
-  'cmd-i':       'transform:run'
-  'shift-cmd-i': 'transform:compile'
+# 'atom-text-editor':
+#   'cmd-i':       'transformer:run'
+#   'shift-cmd-i': 'transformer:compile'

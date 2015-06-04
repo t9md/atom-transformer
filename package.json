@@ -1,10 +1,10 @@
 {
-  "name": "transform",
+  "name": "transformer",
   "main": "./lib/main",
   "version": "0.0.0",
   "description": "Transform anything!",
   "keywords": [],
-  "repository": "https://github.com/t9md/atom-transform",
+  "repository": "https://github.com/t9md/atom-transformer",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"

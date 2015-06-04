@@ -1,9 +1,9 @@
 {CompositeDisposable} = require 'atom'
 _    = require 'underscore-plus'
 transformers = require './transformer'
-fs   = require 'fs'
 path = require 'path'
-temp = null
+os = require 'os'
+
 
 Config = {}
 
@@ -14,9 +14,9 @@ module.exports =
   activate: (state) ->
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add 'atom-workspace',
-      'transform:here':    => @transform('here')
-      'transform:run':     => @transform('there', 'run')
-      'transform:compile': => @transform('there', 'compile')
+      'transformer:here':    => @transform('here')
+      'transformer:run':     => @transform('there', 'run')
+      'transformer:compile': => @transform('there', 'compile')
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
@@ -35,26 +35,26 @@ module.exports =
     if Transformer
       transformer = new Transformer(editor)
       transformer.transform action
-      return
-    else
-      text = editor.getSelectedText() or editor.getText()
-      text = @surroundWord text, '"'
 
-    selection = editor.getLastSelection()
-    switch where
-      when 'here'
-        if selection.isEmpty()
-          editor.setText text
-        else
-          selection.insertText text
-      when 'there'
-        @there text
-        selection.clear()
+    # else
+    #   text = editor.getSelectedText() or editor.getText()
+    #   text = @surroundWord text, '"'
+    #
+    # selection = editor.getLastSelection()
+    # switch where
+    #   when 'here'
+    #     if selection.isEmpty()
+    #       editor.setText text
+    #     else
+    #       selection.insertText text
+    #   when 'there'
+    #     @there text
+    #     selection.clear()
 
   there: (text) ->
     editor = @getEditor()
     grammar = editor.getGrammar()
-    filePath  = "/tmp/transform"
+    filePath = path.join os.tmpdir(), 'transformer'
 
     options =
       searchAllPanes: true
