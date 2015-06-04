@@ -1,15 +1,13 @@
 {CompositeDisposable} = require 'atom'
-_    = require 'underscore-plus'
+_            = require 'underscore-plus'
 transformers = require './transformer'
-path = require 'path'
-os = require 'os'
-
+path         = require 'path'
+os           = require 'os'
 
 Config = {}
-
 module.exports =
   subscriptions: null
-  config: Config
+  config:        Config
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
@@ -17,6 +15,11 @@ module.exports =
       'transformer:here':    => @transform('here')
       'transformer:run':     => @transform('there', 'run')
       'transformer:compile': => @transform('there', 'compile')
+
+  deactivate: ->
+    @subscriptions.dispose()
+
+  serialize: ->
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
@@ -63,8 +66,3 @@ module.exports =
     atom.workspace.open(filePath, options).done (editor) =>
       editor.insertText text
       editor.setGrammar grammar
-
-  deactivate: ->
-    @subscriptions.dispose()
-
-  serialize: ->
