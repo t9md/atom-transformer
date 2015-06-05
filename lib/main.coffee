@@ -1,8 +1,5 @@
 {CompositeDisposable} = require 'atom'
-_            = require 'underscore-plus'
 transformers = require './transformer'
-path         = require 'path'
-os           = require 'os'
 
 Config = {}
 module.exports =
@@ -21,7 +18,7 @@ module.exports =
 
   transform: (where, action) ->
     return unless editor = @getEditor()
-    
+
     if Transformer = transformers[editor.getGrammar().name]
       transformer = new Transformer(editor)
       transformer.transform action
