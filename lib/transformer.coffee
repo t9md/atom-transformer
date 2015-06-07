@@ -1,65 +1,8 @@
 {BufferedProcess} = require 'atom'
-R    = require 'ramda'
 fs   = require 'fs'
 path = require 'path'
 temp = require 'temp'
 os   = require 'os'
-
-class Inputter
-  constructor: (@editor, @type='auto') ->
-  read: ->
-    switch @type
-      when 'auto'
-        @editor.getSelectedText() or @editor.getText()
-      when 'line'
-        @editor.getLastCursor().getCurrentBufferLine()
-      when 'buffer'
-        return @editor.getText()
-      when 'selection'
-        return @editor.getSelectedText()
-
-  writeTempfile: (text) ->
-    temp.track()
-    dir      = temp.mkdirSync "transformer"
-    filePath = path.join(dir, "tempfile")
-    fs.writeFileSync filePath, text
-    return filePath
-
-class Outputter
-  constructor: (@editor, @type='auto', @tmp='/tmp/transformer') ->
-
-  write: (text) ->
-    switch @type
-      when 'auto'
-        true
-      when 'here'
-        @editor.setText(text)
-      when 'tmp'
-        @output @tmp
-
-  output: (filePath, callback) ->
-    options =
-      searchAllPanes: true
-      activatePane: false
-      split: 'right'
-
-    atom.workspace.open(filePath, options).done (editor) =>
-      # Clear existing text
-      editor.setText ''
-      callback editor
-
-class Router
-  @handle: (url) ->
-    switch url
-      when 'upcase'
-        i = new Inputter().read
-        t = new Transformer().transform
-        o = new Outputter().write
-        transformer = R.pipe i, t, o
-        console.log transformer("s")
-
-# class Transformer
-#   constructor: (args) ->
 
 class Transformer
   needSave:  true
