@@ -1,5 +1,5 @@
 {BufferedProcess} = require 'atom'
-fs   = require 'fs'
+fs   = require 'fs-plus'
 path = require 'path'
 temp = require 'temp'
 os   = require 'os'
@@ -31,12 +31,19 @@ class Transformer
     @dir = path.dirname @URI
 
   output: (filePath, callback) ->
+    unless atom.workspace.paneForURI(fs.absolute(filePath))?
+      activePane = atom.workspace.getActivePane()
+      switch atom.config.get('transformer.split')
+        when 'up'    then activePane.splitUp()
+        when 'down'  then activePane.splitDown()
+        when 'right' then activePane.splitRight()
+        when 'left'  then activePane.splitLeft()
+
     options =
       searchAllPanes: true
       activatePane: false
-      split: 'right'
 
-    atom.workspace.open(filePath, options).done (editor) =>
+    atom.workspace.open(filePath, options).done (editor) ->
       # Clear existing text
       editor.setText ''
       callback editor

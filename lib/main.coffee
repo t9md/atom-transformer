@@ -1,10 +1,17 @@
 {CompositeDisposable} = require 'atom'
 transformers = require './transformer'
 
-Config = {}
+Config =
+  split:
+    order: 0
+    type: 'string'
+    default: 'right'
+    enum: ['none', 'left', 'right', 'up', 'down']
+    description: "Where output buffer opend"
+
 module.exports =
   subscriptions: null
-  config:        Config
+  config: Config
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable

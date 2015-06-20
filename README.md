@@ -6,7 +6,8 @@ Transform anything!
 
 # Development status
 
-Alpha  
+VERY Alpha.
+Config parameter, command name might change without notification.  
 
 # How to use
 
@@ -50,5 +51,15 @@ And transformation is achieved by following steps.
 4. (optional) post output
 
 So what this package is aiming at is provide basic framework to easily transform string to another form.
+
+# FAQ
+
+## command not found?
+Configure `process.env.PATH` in you `init.coffee`.
+
+e.g.
+```coffeescript
+process.env.PATH  = "/usr/local/bin:/usr/bin"
+```
 
 # TODO

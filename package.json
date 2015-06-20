@@ -3,6 +3,12 @@
   "main": "./lib/main",
   "version": "0.1.0",
   "description": "Transform anything!",
+  "activationCommands": {
+    "atom-workspace": [
+      "transformer:run",
+      "transformer:compile"
+    ]
+  },
   "keywords": [],
   "repository": "https://github.com/t9md/atom-transformer",
   "license": "MIT",
@@ -10,7 +16,7 @@
     "atom": ">=0.174.0 <2.0.0"
   },
   "dependencies": {
-    "ramda": "^0.14.0",
+    "fs-plus": "^2.8.1",
     "temp": "^0.8.1",
     "underscore-plus": "^1.6.6"
   }
