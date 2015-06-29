@@ -97,6 +97,8 @@ class CoffeeScript extends Transformer
 
 class Python extends Transformer
 
+class Ruby extends Transformer
+
 class JavaScript extends Transformer
   command: 'node'
 
@@ -125,5 +127,5 @@ class LESS extends Transformer
         outEditor.save()
 
 module.exports = {
-  CoffeeScript, LESS, Python, Go, JavaScript
+  CoffeeScript, LESS, Python, Go, JavaScript, Ruby
 }

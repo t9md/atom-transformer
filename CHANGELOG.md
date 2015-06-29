@@ -1,3 +1,6 @@
+## 0.1.2 - Improve
+- Add Ruby transformer
+
 ## 0.1.1 - Improve
 - new configuration `split`.
 
