@@ -1,4 +1,7 @@
-## 0.1.2 - Improve
+## 0.2.1 - Improve
+- FIX CHANGELOG mismatch actual version
+
+## 0.2.0 - Improve
 - Add Ruby transformer
 
 ## 0.1.1 - Improve
