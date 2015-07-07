@@ -1,3 +1,6 @@
+## 0.2.2 - Improve
+- Add LESS dependency.
+
 ## 0.2.1 - Improve
 - FIX CHANGELOG mismatch actual version
 
