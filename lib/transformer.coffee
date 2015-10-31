@@ -43,7 +43,7 @@ class Transformer
       searchAllPanes: true
       activatePane: false
 
-    atom.workspace.open(filePath, options).done (editor) ->
+    atom.workspace.open(filePath, options).then (editor) ->
       # Clear existing text
       editor.setText ''
       callback editor
@@ -112,9 +112,9 @@ class LESS extends Transformer
     filePath = @editor.getURI()
     @extension = 'css'
 
-    @output @getOutFilePath(), (outEditor) =>
+    @output @getOutFilePath(), (outEditor) ->
       less = require 'less'
-      resourcePath = atom.themes.resourcePath;
+      resourcePath = atom.themes.resourcePath
       atomVariablesPath = path.resolve resourcePath, 'static', 'variables'
       options =
         paths: ['.', atomVariablesPath]
