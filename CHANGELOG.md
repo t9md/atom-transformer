@@ -1,3 +1,6 @@
+## 0.2.3 - FIX
+- [FIX] Deprecation warn from Atom v1.1.0.
+
 ## 0.2.2 - Improve
 - Add LESS dependency.
 
