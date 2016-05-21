@@ -1,3 +1,7 @@
+## 0.4.0
+- Remove language by language support, instead, simply assuming runner command is lowercase of grammar.
+ - e.g Ruby -> ruby,  Python > python
+
 ## 0.3.0
 - Cleanup, fix LESS to Less(seem to be changed in language-less?).
 

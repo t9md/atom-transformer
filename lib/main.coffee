@@ -33,6 +33,11 @@ module.exports =
     className = editor.getGrammar().name
     if klass = transformers[className]
       new klass(editor)
+    else
+      {Transformer} = transformers
+      transformer = new Transformer(editor)
+      transformer.setCommand(className.toLowerCase())
+      transformer
 
   transform: (action) ->
     transformer = @getTransformer()

@@ -17,6 +17,8 @@ class Transformer
     @save() if @needSave
     @initialize?()
 
+  setCommand: (@command) ->
+
   getCommand: ->
     @command ?= @constructor.name.toLowerCase()
 
@@ -101,10 +103,6 @@ class CoffeeScript extends Transformer
     @args = ["-cbp", "--no-header", @sourcePath]
     super
 
-class Python extends Transformer
-
-class Ruby extends Transformer
-
 class JavaScript extends Transformer
   command: 'node'
   initialize: ->
@@ -132,5 +130,9 @@ class Less extends Transformer
         )
 
 module.exports = {
-  CoffeeScript, Less, Python, Go, JavaScript, Ruby
+  Transformer
+  CoffeeScript
+  JavaScript
+  Less
+  Go
 }

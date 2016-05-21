@@ -20,7 +20,14 @@ So you can use default TextEditor feature without special supports.
 
 ## Supported language
 
-See [this file](https://github.com/t9md/atom-transformer/blob/master/lib/transformer.coffee).
+Languages which "runner command is lower case of grammar name" are supported.
+
+e.g.
+Ruby's grammar name(`editor.getGrammar().name`) is Ruby.
+and Ruby file can run by `ruby file.rb`.  
+Other languages fall into this type are Python, OCaml.
+
+For other languages not match above convention like `go run`, see [this file](https://github.com/t9md/atom-transformer/blob/master/lib/transformer.coffee).
 
 # FAQ
 
