@@ -5,13 +5,13 @@ temp = require 'temp'
 os   = require 'os'
 
 class Transformer
-  needSave:  true
-  command:   null
-  args:      null
-  options:   null
-  tempFile:  null
+  needSave: true
+  command: null
+  args: null
+  options: null
+  tempFile: null
   extension: null
-  outFile:   path.join os.tmpdir(), 'transformer'
+  outFile: path.join os.tmpdir(), 'transformer'
 
   constructor: (@editor) ->
     selection = @editor.getLastSelection()
@@ -57,6 +57,7 @@ class Transformer
     stdout  = (output) -> onData output
     stderr  = (output) -> onData output
     exit    = (code)   -> onFinish code
+    # console.log [command, args]
     process = new BufferedProcess {command, args, options, stdout, stderr, exit}
 
   writeTempfile: (text) ->
@@ -101,6 +102,8 @@ class Ruby extends Transformer
 
 class JavaScript extends Transformer
   command: 'node'
+  initialize: ->
+    @args = ["--harmony", @URI]
 
 class Go extends Transformer
   initialize: -> @args = ['run', @URI]
