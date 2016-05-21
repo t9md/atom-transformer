@@ -1,3 +1,6 @@
+## 0.3.0
+- Cleanup, fix LESS to Less(seem to be changed in language-less?).
+
 ## 0.2.3 - FIX
 - [FIX] Deprecation warn from Atom v1.1.0.
 

@@ -7,10 +7,7 @@ Config =
     type: 'string'
     default: 'right'
     enum: [
-      'none'
-      'left'
       'right'
-      'up'
       'down'
     ]
     description: "Where output buffer to open"
@@ -21,16 +18,22 @@ module.exports =
 
   activate: ->
     @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-workspace',
-      'transformer:run': => @transform('there', 'run')
-      'transformer:compile': => @transform('there', 'compile')
+    @subscribe atom.commands.add 'atom-text-editor',
+      'transformer:run': => @transform('run')
+      'transformer:compile': => @transform('compile')
 
-  deactivate: -> @subscriptions.dispose()
-  getEditor:  -> atom.workspace.getActiveTextEditor()
+  subscribe: (args...) ->
+    @subscriptions.add(args...)
 
-  transform: (where, action) ->
-    return unless editor = @getEditor()
+  deactivate: ->
+    @subscriptions.dispose()
 
-    if Transformer = transformers[editor.getGrammar().name]
-      transformer = new Transformer(editor)
-      transformer.transform action
+  getTransformer: ->
+    editor = atom.workspace.getActiveTextEditor()
+    className = editor.getGrammar().name
+    if klass = transformers[className]
+      new klass(editor)
+
+  transform: (action) ->
+    transformer = @getTransformer()
+    transformer?.transform(action)

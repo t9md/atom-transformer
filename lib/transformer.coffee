@@ -1,90 +1,95 @@
 {BufferedProcess} = require 'atom'
-fs   = require 'fs-plus'
+fs = require 'fs-plus'
 path = require 'path'
 temp = require 'temp'
-os   = require 'os'
+os = require 'os'
+less = null
+_ = require 'underscore-plus'
 
 class Transformer
   needSave: true
   command: null
   args: null
-  options: null
   tempFile: null
   extension: null
-  outFile: path.join os.tmpdir(), 'transformer'
 
   constructor: (@editor) ->
-    selection = @editor.getLastSelection()
-    @source   = selection.isEmpty() and 'buffer' or 'selection'
     @save() if @needSave
-    @command ?= @constructor.name.toLowerCase()
-    @initialize()
+    @initialize?()
 
-  initialize: ->
+  getCommand: ->
+    @command ?= @constructor.name.toLowerCase()
 
   save: ->
-    if @source is 'buffer'
-      @editor.save() if @editor.isModified()
-      @URI = @editor.getURI()
-    else if @source is 'selection'
-      @URI = @tempFile = @writeTempfile @editor.getSelectedText()
-    @dir = path.dirname @URI
+    switch
+      when @editor.getLastSelection().isEmpty()
+        @editor.save() if @editor.isModified()
+        @sourcePath = @editor.getPath()
+      else
+        @sourcePath = @tempFile = @writeToTempfile(@editor.getSelectedText())
+    @cwd = path.dirname(@sourcePath)
 
-  output: (filePath, callback) ->
-    unless atom.workspace.paneForURI(fs.absolute(filePath))?
-      activePane = atom.workspace.getActivePane()
-      switch atom.config.get('transformer.split')
-        when 'up'    then activePane.splitUp()
-        when 'down'  then activePane.splitDown()
+  writeToTempfile: (text) ->
+    temp.track()
+    dir = temp.mkdirSync("transformer")
+    filePath = path.join(dir, "tempfile")
+    fs.writeFileSync(filePath, text)
+    return filePath
+
+  getAdjacentPaneForPane: (pane) ->
+    return unless children = pane.getParent().getChildren?()
+    index = children.indexOf(pane)
+    options = {split: 'left', activatePane: false}
+
+    _.chain([children[index-1], children[index+1]])
+      .filter (pane) ->
+        pane?.constructor?.name is 'Pane'
+      .last()
+      .value()
+
+  activateAdjacentPane: (direction) ->
+    activePane = atom.workspace.getActivePane()
+    if pane = @getAdjacentPaneForPane(activePane)
+      pane.activate()
+    else
+      pane = switch direction
         when 'right' then activePane.splitRight()
-        when 'left'  then activePane.splitLeft()
+        when 'down' then activePane.splitDown()
+    pane
 
-    options =
-      searchAllPanes: true
-      activatePane: false
+  openResultEditor: ->
+    filePath = do =>
+      basePath = path.join(os.tmpdir(), 'transformer')
+      if @extension
+        "#{basePath}.#{@extension}"
+      else
+        basePath
 
+    @activateAdjacentPane(atom.config.get('transformer.split'))
+    options = {searchAllPanes: true, activatePane: false}
     atom.workspace.open(filePath, options).then (editor) ->
-      # Clear existing text
-      editor.setText ''
-      callback editor
+      editor.setText('') # Clear existing text
+      editor.isModified = -> false
+      editor # pass editor to next Promise::then
 
   runCommand: ({command, args, options, editor}) ->
-    onData   = (data) -> editor.insertText data
-    onFinish = (code) ->
-      temp.cleanupSync() if @tempFile
-      editor.save()
-
-    stdout  = (output) -> onData output
-    stderr  = (output) -> onData output
-    exit    = (code)   -> onFinish code
+    stdout = stderr = (data) -> editor.insertText(data)
+    exit = (code) -> temp.cleanupSync() if @tempFile
     # console.log [command, args]
-    process = new BufferedProcess {command, args, options, stdout, stderr, exit}
-
-  writeTempfile: (text) ->
-    temp.track()
-    dir      = temp.mkdirSync "transformer"
-    filePath = path.join(dir, "tempfile")
-    fs.writeFileSync filePath, text
-    return filePath
+    options = {command, args, options, stdout, stderr, exit}
+    new BufferedProcess(options)
 
   transform: (action) ->
     switch action
-      when 'run'
-        @run()
-      when 'compile'
-        @compile()
-
-  getOutFilePath: ->
-    if @extension
-      "#{@outFile}.#{@extension}"
-    else
-      @outFile
+      when 'run' then @run()
+      when 'compile' then @compile()
 
   run: ->
-    @output @getOutFilePath(), (editor) =>
-      @args    ?= [@URI]
-      @options ?= cwd: @dir
-      @runCommand {@command, @args, @options, editor}
+    @openResultEditor().then (editor) =>
+      command = @getCommand()
+      @args ?= [@sourcePath]
+      options = {@cwd}
+      @runCommand {command, @args, @options, editor}
 
   compile: ->
     @run()
@@ -93,8 +98,8 @@ class CoffeeScript extends Transformer
   command: 'coffee'
   compile: ->
     @extension = 'js'
-    @args = ["-cbp","--no-header", @URI]
-    @run()
+    @args = ["-cbp", "--no-header", @sourcePath]
+    super
 
 class Python extends Transformer
 
@@ -103,32 +108,29 @@ class Ruby extends Transformer
 class JavaScript extends Transformer
   command: 'node'
   initialize: ->
-    @args = ["--harmony", @URI]
+    @args = ["--harmony", @sourcePath]
 
 class Go extends Transformer
-  initialize: -> @args = ['run', @URI]
+  initialize: ->
+    @args = ['run', @sourcePath]
 
-class LESS extends Transformer
+class Less extends Transformer
   needSave: false
-  transform: (action) ->
-    text     = @editor.getSelectedText() or @editor.getText()
-    filePath = @editor.getURI()
-    @extension = 'css'
+  extension: 'css'
 
-    @output @getOutFilePath(), (outEditor) ->
-      less = require 'less'
-      resourcePath = atom.themes.resourcePath
-      atomVariablesPath = path.resolve resourcePath, 'static', 'variables'
-      options =
-        paths: ['.', atomVariablesPath]
-        filename: filePath
-      less.render text, options, (error, output) ->
-        if error
-          outEditor.insertText error.message
-        else
-          outEditor.insertText output.css
-        outEditor.save()
+  run: ->
+    less ?= require('less')
+    text = @editor.getSelectedText() or @editor.getText()
+
+    atomVariablesPath = path.resolve(atom.themes.resourcePath, 'static', 'variables')
+    renderOptions = {paths: ['.', atomVariablesPath], filename: @editor.getPath()}
+
+    @openResultEditor().then (editor) ->
+      less.render text, renderOptions, (error, output) ->
+        editor.insertText(
+          if error then error.message else output.css
+        )
 
 module.exports = {
-  CoffeeScript, LESS, Python, Go, JavaScript, Ruby
+  CoffeeScript, Less, Python, Go, JavaScript, Ruby
 }

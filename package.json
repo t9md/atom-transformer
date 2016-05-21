@@ -2,9 +2,9 @@
   "name": "transformer",
   "main": "./lib/main",
   "version": "0.2.3",
-  "description": "Transform anything!",
+  "description": "Transform something",
   "activationCommands": {
-    "atom-workspace": [
+    "atom-text-editor": [
       "transformer:run",
       "transformer:compile"
     ]
