@@ -28,13 +28,17 @@ class Transformer
         @editor.save() if @editor.isModified()
         @sourcePath = @editor.getPath()
       else
-        @sourcePath = @tempFile = @writeToTempfile(@editor.getSelectedText())
+        text = @editor.getSelectedText()
+        extname = path.extname(@editor.getPath())
+        @sourcePath = @tempFile = @writeToTempfile(text, extname)
     @cwd = path.dirname(@sourcePath)
 
-  writeToTempfile: (text) ->
+  writeToTempfile: (text, extname=null) ->
     temp.track()
     dir = temp.mkdirSync("transformer")
-    filePath = path.join(dir, "tempfile")
+    fileName = 'tempfile'
+    fileName = "#{fileName}.#{extname}" if extname
+    filePath = path.join(dir, fileName)
     fs.writeFileSync(filePath, text)
     return filePath
 
@@ -67,15 +71,17 @@ class Transformer
       else
         basePath
 
+    originalPane = atom.workspace.getActivePane()
     @activateAdjacentPane(atom.config.get('transformer.split'))
     options = {searchAllPanes: true, activatePane: false}
     atom.workspace.open(filePath, options).then (editor) ->
       editor.setText('') # Clear existing text
       editor.isModified = -> false
+      originalPane.activate()
       editor # pass editor to next Promise::then
 
   runCommand: ({command, args, options, editor}) ->
-    stdout = stderr = (data) -> editor.insertText(data)
+    stdout = stderr = (data) -> editor?.insertText(data)
     exit = (code) -> temp.cleanupSync() if @tempFile
     # console.log [command, args]
     options = {command, args, options, stdout, stderr, exit}
@@ -91,7 +97,7 @@ class Transformer
       command = @getCommand()
       @args ?= [@sourcePath]
       options = {@cwd}
-      @runCommand {command, @args, @options, editor}
+      @runCommand {command, @args, options, editor}
 
   compile: ->
     @run()
@@ -109,8 +115,57 @@ class JavaScript extends Transformer
     @args = ["--harmony", @sourcePath]
 
 class Go extends Transformer
+  command: 'coffee'
+  compile: ->
+    @extension = 'js'
+    @args = ["-cbp", "--no-header", @sourcePath]
+    super
+
   initialize: ->
     @args = ['run', @sourcePath]
+
+getBaseName = (file) ->
+  path.basename(file, path.extname(file))
+
+class OCaml extends Transformer
+  cleanup: ->
+    baseName = getBaseName(@sourcePath)
+    dirName = path.dirname(@sourcePath)
+    fs.removeSync(path.join(dirName, "#{baseName}.cmi"))
+    fs.removeSync(path.join(dirName, "#{baseName}.cmj"))
+
+  _runCommand: ({command, args, options, editor}) ->
+    new Promise (resolve) ->
+      stdout = stderr = ->
+      exit = (code) -> resolve()
+      options = {command, args, options, stdout, stderr, exit}
+      new BufferedProcess(options)
+
+  compile: ->
+    @command = 'bsc'
+    @extension = 'js'
+
+    dirName = path.dirname(@sourcePath)
+    outputFile = path.join(dirName, getBaseName(@sourcePath) + ".js")
+
+    runBsc = =>
+      new Promise (resolve) =>
+        new BufferedProcess
+          command: 'bsc'
+          args: ["-I", ".", "-c", @sourcePath]
+          options: {@cwd}
+          stdout: ->
+          stderr: ->
+          exit: -> resolve()
+
+    runBsc().then =>
+      @openResultEditor().then (editor) =>
+        @runCommand
+          command: "cat"
+          args: [outputFile]
+          options: {@cwd}
+          editor: editor
+        @cleanup()
 
 class Less extends Transformer
   needSave: false
@@ -135,4 +190,5 @@ module.exports = {
   JavaScript
   Less
   Go
+  OCaml
 }
