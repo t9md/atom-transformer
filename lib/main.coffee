@@ -30,6 +30,8 @@ module.exports =
 
   getTransformer: ->
     editor = atom.workspace.getActiveTextEditor()
+    grammar = editor.getGrammar()
+    return unless grammar.scopeName.startsWith('source')
     className = editor.getGrammar().name
     if klass = transformers[className]
       new klass(editor)

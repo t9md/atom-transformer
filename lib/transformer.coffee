@@ -33,11 +33,14 @@ class Transformer
         @sourcePath = @tempFile = @writeToTempfile(text, extname)
     @cwd = path.dirname(@sourcePath)
 
+  cleanupTemp: ->
+    temp.cleanupSync() if @tempFile
+
   writeToTempfile: (text, extname=null) ->
     temp.track()
     dir = temp.mkdirSync("transformer")
     fileName = 'tempfile'
-    fileName = "#{fileName}.#{extname}" if extname
+    fileName = "#{fileName}#{extname}" if extname
     filePath = path.join(dir, fileName)
     fs.writeFileSync(filePath, text)
     return filePath
@@ -78,14 +81,13 @@ class Transformer
       editor.setText('') # Clear existing text
       editor.isModified = -> false
       originalPane.activate()
-      editor # pass editor to next Promise::then
+      return editor # pass editor to next Promise::then
 
-  runCommand: ({command, args, options, editor}) ->
-    stdout = stderr = (data) -> editor?.insertText(data)
-    exit = (code) -> temp.cleanupSync() if @tempFile
-    # console.log [command, args]
-    options = {command, args, options, stdout, stderr, exit}
-    new BufferedProcess(options)
+  runCommand: ({command, args, options, stdout, stderr, exit}) ->
+    new Promise (resolve) ->
+      exit ?= (code) -> resolve()
+      options = {command, args, options, stdout, stderr, exit}
+      new BufferedProcess(options)
 
   transform: (action) ->
     switch action
@@ -93,11 +95,18 @@ class Transformer
       when 'compile' then @compile()
 
   run: ->
-    @openResultEditor().then (editor) =>
+    runCommand = (editor) =>
       command = @getCommand()
-      @args ?= [@sourcePath]
+      args = @args ? [@sourcePath]
       options = {@cwd}
-      @runCommand {command, @args, options, editor}
+      stdout = stderr = (data) -> editor.insertText(data)
+      @runCommand({command, args, options, stdout, stderr})
+
+    cleanupTemp = @cleanupTemp.bind(this)
+
+    @openResultEditor()
+      .then(runCommand)
+      .then(cleanupTemp)
 
   compile: ->
     @run()
@@ -128,44 +137,39 @@ getBaseName = (file) ->
   path.basename(file, path.extname(file))
 
 class OCaml extends Transformer
-  cleanup: ->
-    baseName = getBaseName(@sourcePath)
-    dirName = path.dirname(@sourcePath)
-    fs.removeSync(path.join(dirName, "#{baseName}.cmi"))
-    fs.removeSync(path.join(dirName, "#{baseName}.cmj"))
-
-  _runCommand: ({command, args, options, editor}) ->
-    new Promise (resolve) ->
-      stdout = stderr = ->
-      exit = (code) -> resolve()
-      options = {command, args, options, stdout, stderr, exit}
-      new BufferedProcess(options)
-
   compile: ->
-    @command = 'bsc'
     @extension = 'js'
 
     dirName = path.dirname(@sourcePath)
     outputFile = path.join(dirName, getBaseName(@sourcePath) + ".js")
 
-    runBsc = =>
-      new Promise (resolve) =>
-        new BufferedProcess
-          command: 'bsc'
-          args: ["-I", ".", "-c", @sourcePath]
-          options: {@cwd}
-          stdout: ->
-          stderr: ->
-          exit: -> resolve()
+    compile = =>
+      command = 'bsc'
+      args = ["-I", ".", "-c", @sourcePath]
+      options = {@cwd}
+      stdout = stderr = ->
+      @runCommand({command, args, options, stdout, stderr})
 
-    runBsc().then =>
-      @openResultEditor().then (editor) =>
-        @runCommand
-          command: "cat"
-          args: [outputFile]
-          options: {@cwd}
-          editor: editor
-        @cleanup()
+    openResultEditor = @openResultEditor.bind(this)
+
+    writeToBuffer = (editor) =>
+      command = 'cat'
+      args = [outputFile]
+      options = {@cwd}
+      stdout = stderr = (data) -> editor.insertText(data)
+      @runCommand({command, args, options, stdout, stderr})
+
+    cleanup = =>
+      @cleanupTemp()
+      baseName = getBaseName(@sourcePath)
+      dirName = path.dirname(@sourcePath)
+      fs.removeSync(path.join(dirName, "#{baseName}.cmi"))
+      fs.removeSync(path.join(dirName, "#{baseName}.cmj"))
+
+    compile()
+      .then(openResultEditor)
+      .then(writeToBuffer)
+      .then(cleanup)
 
 class Less extends Transformer
   needSave: false
