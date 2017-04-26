@@ -1,3 +1,6 @@
+## 0.5.0
+- Add PHP
+
 ## 0.4.0
 - Remove language by language support, instead, simply assuming runner command is lowercase of grammar.
  - e.g Ruby -> ruby,  Python > python
