@@ -28,17 +28,21 @@ module.exports =
   deactivate: ->
     @subscriptions.dispose()
 
+  isSupportedGrammar: (grammar) ->
+    grammar.scopeName.startsWith('source') or grammar.scopeName is 'text.html.php'
+
   getTransformer: ->
     editor = atom.workspace.getActiveTextEditor()
     grammar = editor.getGrammar()
-    return unless grammar.scopeName.startsWith('source')
-    className = editor.getGrammar().name
-    if klass = transformers[className]
+    return unless @isSupportedGrammar(grammar)
+    if klass = transformers[grammar.name]
       new klass(editor)
     else
+      # When specific transformer not found. Try with lowercased command
+      # e.g. PHP -> php, Ruby -> ruby
       {Transformer} = transformers
       transformer = new Transformer(editor)
-      transformer.setCommand(className.toLowerCase())
+      transformer.setCommand(grammar.name.toLowerCase())
       transformer
 
   transform: (action) ->

@@ -6,6 +6,9 @@ os = require 'os'
 less = null
 _ = require 'underscore-plus'
 
+getBaseName = (file) ->
+  path.basename(file, path.extname(file))
+
 class Transformer
   needSave: true
   command: null
@@ -124,17 +127,11 @@ class JavaScript extends Transformer
     @args = ["--harmony", @sourcePath]
 
 class Go extends Transformer
-  command: 'coffee'
-  compile: ->
-    @extension = 'js'
-    @args = ["-cbp", "--no-header", @sourcePath]
-    super
-
   initialize: ->
     @args = ['run', @sourcePath]
 
-getBaseName = (file) ->
-  path.basename(file, path.extname(file))
+class Haskell extends Transformer
+  command: 'runhaskell'
 
 class OCaml extends Transformer
   compile: ->
@@ -195,4 +192,5 @@ module.exports = {
   Less
   Go
   OCaml
+  Haskell
 }
