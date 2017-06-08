@@ -12,6 +12,9 @@ Config =
     ]
     description: "Where output buffer to open"
 
+grammarTranslateTable =
+  'Babel ES6 JavaScript': 'JavaScript'
+
 module.exports =
   subscriptions: null
   config: Config
@@ -31,18 +34,26 @@ module.exports =
   isSupportedGrammar: (grammar) ->
     grammar.scopeName.startsWith('source') or grammar.scopeName is 'text.html.php'
 
+  translateGrammarName: (grammar) ->
+    if grammar.name of grammarTranslateTable
+      grammarTranslateTable[grammar.name]
+    else
+      grammar.name
+
   getTransformer: ->
     editor = atom.workspace.getActiveTextEditor()
     grammar = editor.getGrammar()
     return unless @isSupportedGrammar(grammar)
-    if klass = transformers[grammar.name]
+
+    grammarName = @translateGrammarName(grammar)
+    if klass = transformers[grammarName]
       new klass(editor)
     else
       # When specific transformer not found. Try with lowercased command
       # e.g. PHP -> php, Ruby -> ruby
       {Transformer} = transformers
       transformer = new Transformer(editor)
-      transformer.setCommand(grammar.name.toLowerCase())
+      transformer.setCommand(grammarName.toLowerCase())
       transformer
 
   transform: (action) ->

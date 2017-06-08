@@ -89,6 +89,10 @@ class Transformer
   runCommand: ({command, args, options, stdout, stderr, exit}) ->
     new Promise (resolve) ->
       exit ?= (code) -> resolve()
+      # env =
+      # options.env = Object.assign({}, process.env)
+      NODE_PATH = '/usr/local/lib/node_modules'
+      options.env = Object.assign({}, process.env, {NODE_PATH})
       options = {command, args, options, stdout, stderr, exit}
       new BufferedProcess(options)
 
@@ -122,9 +126,14 @@ class CoffeeScript extends Transformer
     super
 
 class JavaScript extends Transformer
-  command: 'node'
+  command: 'babel-node'
   initialize: ->
-    @args = ["--harmony", @sourcePath]
+    @args = ["--presets=es2017", @sourcePath]
+
+  compile: ->
+    @command = 'babel'
+    @extension = 'es6.js'
+    super
 
 class Go extends Transformer
   initialize: ->
