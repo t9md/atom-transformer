@@ -128,7 +128,7 @@ class CoffeeScript extends Transformer
 class JavaScript extends Transformer
   command: 'babel-node'
   initialize: ->
-    @args = ["--presets=es2017", @sourcePath]
+    @args = ["--presets=stage-2", @sourcePath]
 
   compile: ->
     @command = 'babel'
@@ -140,7 +140,7 @@ class Go extends Transformer
     @args = ['run', @sourcePath]
 
 class Haskell extends Transformer
-  command: 'runhaskell'
+  command: 'stack'
 
 class OCaml extends Transformer
   compile: ->
