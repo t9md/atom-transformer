@@ -6,7 +6,7 @@ Transform something.
 
 # Development status
 
-VERY Alpha.
+Alpha.
 Config parameter, command name might change without notification.  
 
 # How to use
