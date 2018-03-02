@@ -16,6 +16,7 @@
     "atom": ">=0.174.0 <2.0.0"
   },
   "dependencies": {
+    "atom-outlet": "^0.2.0",
     "fs-plus": "^2.8.1",
     "less": "^2.5.1",
     "temp": "^0.8.1",
@@ -35,11 +36,19 @@
     "openLocation": {
       "order": 1,
       "type": "string",
-      "default": "dock-bottom",
+      "default": "bottom",
       "enum": [
-        "center-right",
-        "center-down",
-        "dock-bottom"
+        "center",
+        "bottom"
+      ]
+    },
+    "split": {
+      "order": 2,
+      "type": "string",
+      "default": "right",
+      "enum": [
+        "right",
+        "down"
       ]
     }
   },
