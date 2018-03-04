@@ -16,7 +16,7 @@
     "atom": ">=0.174.0 <2.0.0"
   },
   "dependencies": {
-    "atom-outlet": "^0.8.0",
+    "atom-outlet": "^0.9.0",
     "fs-plus": "^2.8.1",
     "less": "^2.5.1",
     "temp": "^0.8.1",
