@@ -1,3 +1,6 @@
+## 0.6.2
+- Up atom-outlet@0.7.0
+
 ## 0.6.1
 - Up atom-outlet@0.6.0
 
