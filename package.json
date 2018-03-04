@@ -1,7 +1,7 @@
 {
   "name": "transformer",
   "main": "./lib/main",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Transform something",
   "activationCommands": {
     "atom-text-editor": [
