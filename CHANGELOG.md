@@ -1,3 +1,6 @@
+## 0.6.0
+- Rearchitect, rewrite everything
+
 ## 0.5.0
 - Add PHP
 
